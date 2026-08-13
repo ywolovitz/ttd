@@ -1,4 +1,4 @@
-// api/_render-pdf.js
+// api/render-pdf.js
 import chromium from 'chrome-aws-lambda';
 import puppeteer from 'puppeteer-core';
 
