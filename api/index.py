@@ -1,132 +1,22 @@
-import os
-import json
-
-from flask import Flask, request
-import requests
-
-from render_lib import render_html_from_quote
+from http.server import BaseHTTPRequestHandler
 
 
-app = Flask(__name__)
+class handler(BaseHTTPRequestHandler):
 
-RENDER_TOKEN = os.environ.get("RENDER_TOKEN")
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
 
-
-@app.route("/api", methods=["POST"])
-@app.route("/api/", methods=["POST"])
-def handler():
-    # Make sure the token exists
-    if not RENDER_TOKEN:
-        return (
-            json.dumps({
-                "error": "RENDER_TOKEN is not configured"
-            }),
-            500,
-            {"Content-Type": "application/json"},
+        self.wfile.write(
+            b'{"python": "works"}'
         )
 
-    # Check authentication
-    token = request.headers.get("x-render-token")
+    def do_POST(self):
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
 
-    if token != RENDER_TOKEN:
-        return (
-            json.dumps({
-                "error": "Unauthorized"
-            }),
-            401,
-            {"Content-Type": "application/json"},
+        self.wfile.write(
+            b'{"python": "post works"}'
         )
-
-    # Parse JSON
-    try:
-        payload = request.get_json(force=True)
-    except Exception:
-        return (
-            json.dumps({
-                "error": "Invalid JSON"
-            }),
-            400,
-            {"Content-Type": "application/json"},
-        )
-
-    # Accept either:
-    # { "quote": {...} }
-    # OR the quote object directly
-    if isinstance(payload, dict) and "quote" in payload:
-        quote = payload["quote"]
-    else:
-        quote = payload
-
-    # Generate HTML
-    try:
-        html = render_html_from_quote(quote)
-    except Exception as e:
-        return (
-            json.dumps({
-                "error": "Render HTML failed",
-                "details": str(e),
-            }),
-            400,
-            {"Content-Type": "application/json"},
-        )
-
-    # Get current Vercel host
-    host = request.headers.get("host")
-
-    if not host:
-        return (
-            json.dumps({
-                "error": "Could not determine request host"
-            }),
-            500,
-            {"Content-Type": "application/json"},
-        )
-
-    # Call the Node PDF renderer
-    node_url = f"https://{host}/api/render-pdf"
-
-    headers = {
-        "Content-Type": "application/json",
-        "x-render-token": RENDER_TOKEN,
-    }
-
-    try:
-        resp = requests.post(
-            node_url,
-            headers=headers,
-            json={"html": html},
-            timeout=60,
-        )
-    except Exception as e:
-        return (
-            json.dumps({
-                "error": "Renderer request failed",
-                "details": str(e),
-            }),
-            500,
-            {"Content-Type": "application/json"},
-        )
-
-    # Renderer returned an error
-    if resp.status_code != 200:
-        return (
-            json.dumps({
-                "error": "Renderer failed",
-                "status_code": resp.status_code,
-                "details": resp.text,
-            }),
-            500,
-            {"Content-Type": "application/json"},
-        )
-
-    # Return PDF
-    pdf_bytes = resp.content
-
-    return (
-        pdf_bytes,
-        200,
-        {
-            "Content-Type": "application/pdf",
-            "Content-Length": str(len(pdf_bytes)),
-        },
-    )
