@@ -1,10 +1,9 @@
 // api/_render-pdf.js
-const chromium = require('chrome-aws-lambda');
-const puppeteer = require('puppeteer-core');
+import chromium from 'chrome-aws-lambda';
+import puppeteer from 'puppeteer-core';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
   const token = req.headers['x-render-token'];
   if (token !== process.env.RENDER_TOKEN) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -35,4 +34,4 @@ module.exports = async function handler(req, res) {
   } finally {
     if (browser) await browser?.close();
   }
-};
+}
