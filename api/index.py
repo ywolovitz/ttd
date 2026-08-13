@@ -12,12 +12,15 @@ app = Flask(__name__)
 RENDER_TOKEN = os.environ.get("RENDER_TOKEN")
 
 
-@app.route("/", methods=["POST"])
+@app.route("/api", methods=["POST"])
+@app.route("/api/", methods=["POST"])
 def handler():
-    # Check that the render token is configured
+    # Make sure the token exists
     if not RENDER_TOKEN:
         return (
-            json.dumps({"error": "RENDER_TOKEN is not configured"}),
+            json.dumps({
+                "error": "RENDER_TOKEN is not configured"
+            }),
             500,
             {"Content-Type": "application/json"},
         )
@@ -27,24 +30,28 @@ def handler():
 
     if token != RENDER_TOKEN:
         return (
-            json.dumps({"error": "Unauthorized"}),
+            json.dumps({
+                "error": "Unauthorized"
+            }),
             401,
             {"Content-Type": "application/json"},
         )
 
-    # Parse JSON body
+    # Parse JSON
     try:
         payload = request.get_json(force=True)
     except Exception:
         return (
-            json.dumps({"error": "Invalid JSON"}),
+            json.dumps({
+                "error": "Invalid JSON"
+            }),
             400,
             {"Content-Type": "application/json"},
         )
 
     # Accept either:
     # { "quote": {...} }
-    # or the quote object directly
+    # OR the quote object directly
     if isinstance(payload, dict) and "quote" in payload:
         quote = payload["quote"]
     else:
@@ -63,16 +70,19 @@ def handler():
             {"Content-Type": "application/json"},
         )
 
-    # Call the Node PDF renderer
+    # Get current Vercel host
     host = request.headers.get("host")
 
     if not host:
         return (
-            json.dumps({"error": "Could not determine request host"}),
+            json.dumps({
+                "error": "Could not determine request host"
+            }),
             500,
             {"Content-Type": "application/json"},
         )
 
+    # Call the Node PDF renderer
     node_url = f"https://{host}/api/render-pdf"
 
     headers = {
@@ -97,7 +107,7 @@ def handler():
             {"Content-Type": "application/json"},
         )
 
-    # Node renderer failed
+    # Renderer returned an error
     if resp.status_code != 200:
         return (
             json.dumps({
@@ -109,7 +119,7 @@ def handler():
             {"Content-Type": "application/json"},
         )
 
-    # Return the generated PDF
+    # Return PDF
     pdf_bytes = resp.content
 
     return (
