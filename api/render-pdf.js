@@ -63,10 +63,11 @@ export default async function handler(req, res) {
       }
     });
 
+    const pdfBuffer = Buffer.from(pdf);
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Length', pdf.length);
+    res.setHeader('Content-Length', pdfBuffer.length);
 
-    return res.status(200).send(pdf);
+    return res.status(200).send(pdfBuffer);
 
   } catch (err) {
     console.error('RENDER ERROR:', err);
