@@ -1,6 +1,0 @@
-{
-  "functions": {
-    "api/_render-pdf.js": { "memory": 1024, "maxDuration": 30 },
-    "api/index.py": { "memory": 512, "maxDuration": 10 }
-  }
-}
