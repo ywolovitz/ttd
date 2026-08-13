@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quotation {{ q.reference }}: {{ q.trip.title }}</title>
+{{ font_block }}
+<style>
+  :root{
+    --red:#B62126; --red-dark:#8E1418; --amber:#F9A61A; --amber-soft:#FEF3DD;
+    --ink:#141414; --muted:#6E6E6E; --line:#E3DFD9; --line-strong:#CFC9C0;
+    --wash:#FAF8F5; --head:#F3EFEA; --paper:#FFFFFF; --info:#0E8BC4;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--ink);
+       background:#EFECE7;font-size:13px;line-height:1.5;}
+  .page{max-width:900px;margin:32px auto;background:var(--paper);
+        box-shadow:0 2px 24px rgba(20,10,5,.10);}
+  .inner{padding:40px 46px 36px;}
+
+  .masthead{display:flex;justify-content:space-between;align-items:flex-start;gap:32px;}
+  .masthead img{width:230px;height:auto;display:block;}
+  .doc-id{text-align:right;}
+  .doc-type{font-size:22px;font-weight:800;font-style:italic;letter-spacing:.05em;
+            text-transform:uppercase;color:var(--red);line-height:1;}
+  .meta{margin-top:12px;font-size:12px;}
+  .meta div{display:flex;justify-content:flex-end;gap:10px;padding:1.5px 0;}
+  .meta dt{color:var(--muted);font-weight:500;}
+  .meta dd{font-weight:600;min-width:130px;text-align:right;}
+  .rule{height:3px;background:var(--red);margin:22px 0 0;}
+
+  .summary{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;
+           border:1px solid var(--line);border-top:none;background:var(--wash);}
+  .summary .cell{padding:14px 18px;border-left:1px solid var(--line);}
+  .summary .cell:first-child{border-left:none;}
+  .k{display:block;font-size:9.5px;font-weight:700;letter-spacing:.13em;
+     text-transform:uppercase;color:var(--red);margin-bottom:3px;}
+  .v{font-weight:600;font-size:14px;}
+  .v small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;margin-top:1px;}
+
+  /* section headings — two levels */
+  .section{margin-top:28px;}
+  .h-major{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:800;
+           font-style:italic;letter-spacing:.06em;text-transform:uppercase;color:var(--red);
+           border-bottom:2px solid var(--red);padding-bottom:6px;margin-bottom:14px;}
+  .h-major .tag{margin-left:auto;font-style:normal;font-weight:500;letter-spacing:0;
+                text-transform:none;color:var(--muted);font-size:11.5px;}
+  .eyebrow{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:800;
+           font-style:italic;letter-spacing:.12em;text-transform:uppercase;
+           color:var(--ink);margin:16px 0 8px;}
+  .eyebrow::before{content:"";width:20px;height:4px;background:var(--amber);flex:none;}
+  .eyebrow .tag{font-style:normal;font-weight:500;letter-spacing:0;text-transform:none;
+                color:var(--muted);font-size:11px;margin-left:auto;}
+
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{text-align:left;font-size:9.5px;font-weight:700;letter-spacing:.06em;
+     text-transform:uppercase;color:var(--muted);padding:6px 9px;
+     background:var(--head);border-bottom:1px solid var(--line-strong);}
+  td{padding:6px 9px;border-bottom:1px solid var(--line);vertical-align:top;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  th.num{text-align:right;}
+  .code{font-weight:700;white-space:nowrap;}
+  a{color:var(--info);text-decoration:none;}
+
+  /* summary tables (flight & accommodation & destination) */
+  .sumtab td{padding:8px 11px;}
+  .sumtab .lbl{font-weight:600;}
+  .sumtab .lbl small{color:var(--muted);font-weight:400;}
+  .sumtab .amt{font-weight:800;font-size:13px;}
+  .sumtab tr:last-child td{border-bottom:2px solid var(--ink);}
+
+  /* option block (flight option / hotel option) */
+  .opt{border:1px solid var(--line-strong);margin-top:12px;break-inside:avoid;}
+  .opt-head{background:var(--red);color:#fff;display:flex;align-items:center;gap:11px;padding:8px 14px;}
+  .opt-chip{background:var(--amber);color:var(--ink);font-size:9.5px;font-weight:800;
+            letter-spacing:.09em;text-transform:uppercase;padding:3px 8px;flex:none;}
+  .opt-title{font-size:14px;font-weight:700;}
+  .opt-title .stars{color:var(--amber);margin-left:6px;font-size:12px;}
+  .opt-total{margin-left:auto;text-align:right;font-size:10px;font-weight:500;opacity:.92;}
+  .opt-total strong{display:block;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;opacity:1;}
+  .opt-body{padding:12px 14px;}
+
+  .subhead{font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+           color:var(--red);margin:10px 0 5px;}
+  .subhead:first-child{margin-top:0;}
+  table.flights td, table.finfo td{padding:5px 9px;}
+  table.finfo{margin-bottom:2px;}
+  .fare-row td{font-weight:700;border-top:1px solid var(--line-strong);}
+
+  /* fare rules / seating / notes as label-value rows */
+  .rules{margin-top:10px;border:1px solid var(--line);}
+  .rules .rr{display:grid;grid-template-columns:120px 1fr;border-bottom:1px solid var(--line);}
+  .rules .rr:last-child{border-bottom:none;}
+  .rules .rk{background:var(--head);padding:6px 10px;font-size:9.5px;font-weight:800;
+             letter-spacing:.06em;text-transform:uppercase;color:var(--ink);}
+  .rules .rv{padding:6px 10px;font-size:11.5px;}
+
+  /* hotel option: label/value grid */
+  .hgrid{display:grid;grid-template-columns:130px 1fr;gap:0;font-size:12px;}
+  .hgrid .hk{background:var(--head);padding:6px 10px;font-size:9.5px;font-weight:800;
+             letter-spacing:.05em;text-transform:uppercase;color:var(--ink);
+             border-bottom:1px solid var(--line);}
+  .hgrid .hv{padding:6px 10px;border-bottom:1px solid var(--line);}
+  .hgrid .hv:last-of-type, .hgrid .hk:last-of-type{border-bottom:none;}
+  .pill{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.04em;
+        padding:2px 7px;border-radius:2px;vertical-align:middle;}
+  .pill-free{background:#E7F3E9;color:#1F6B33;}
+  .pill-nonref{background:#FBEAEA;color:#9A2A2A;}
+
+  .note-box{border:1px solid var(--line);padding:11px 15px;background:var(--wash);break-inside:avoid;}
+  .note-box ul{padding-left:16px;} .note-box li{margin:3px 0;}
+  .note-box p{margin-bottom:5px;}
+  .note-box.empty{color:var(--muted);font-style:italic;}
+  .pending{border-left:3px solid var(--red);}
+  .info-head{background:var(--info);color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;
+             text-transform:uppercase;padding:6px 12px;}
+  .info-body{border:1px solid var(--line);border-top:none;padding:10px 14px;font-size:12px;background:var(--wash);}
+  .terms{font-size:10.5px;color:var(--muted);columns:2;column-gap:28px;}
+  .terms ul{padding-left:14px;} .terms li{margin:0 0 5px;break-inside:avoid;}
+
+  .foot{margin-top:30px;border-top:3px solid var(--red);padding-top:12px;display:flex;
+        justify-content:space-between;align-items:flex-start;gap:24px;font-size:11px;color:var(--muted);}
+  .foot .cta{background:var(--red);color:#fff;text-decoration:none;font-weight:700;
+             padding:9px 16px;font-size:12px;white-space:nowrap;}
+  .consultant b{color:var(--ink);}
+
+  @media print{
+    body{background:#fff;} .page{box-shadow:none;margin:0;max-width:none;}
+    .inner{padding:20px 26px;} .section{margin-top:20px;}
+    .opt{break-inside:avoid;} .rules,.note-box,.info-body,.hgrid{break-inside:avoid;}
+    .opt-head{break-inside:avoid;break-after:avoid;} tr{break-inside:avoid;}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+  @media (max-width:660px){
+    .inner{padding:20px 15px;}
+    .masthead{flex-direction:column;} .doc-id{text-align:left;}
+    .meta div{justify-content:flex-start;} .meta dd{text-align:left;}
+    .summary{grid-template-columns:1fr 1fr;}
+    .summary .cell:nth-child(n+3){border-top:1px solid var(--line);}
+    .summary .cell:nth-child(3){border-left:none;}
+    .hgrid,.rules .rr{grid-template-columns:100px 1fr;}
+    .terms{columns:1;} .opt-head{flex-wrap:wrap;} .opt-total{margin-left:0;text-align:left;}
+    table{font-size:11px;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="inner">
+
+    <!-- HEADER -->
+    <header class="masthead">
+      <img src="data:image/png;base64,{{ logo_b64 }}" alt="XL The Travel Department">
+      <div class="doc-id">
+        <div class="doc-type">Quotation</div>
+        <dl class="meta">
+          <div><dt>Quote ref</dt><dd>{{ q.reference }}</dd></div>
+          <div><dt>Date</dt><dd>{{ q.date }}</dd></div>
+          <div><dt>Valid until</dt><dd>{{ q.valid_until }}</dd></div>
+          <div><dt>Consultant</dt><dd>{{ q.consultant.name }}</dd></div>
+          {% if q.client.file_ref %}<div><dt>Client file</dt><dd>{{ q.client.file_ref }}</dd></div>{% endif %}
+        </dl>
+      </div>
+    </header>
+    <div class="rule"></div>
+
+    <!-- 1. TRAVELLERS / TRIP -->
+    <div class="summary">
+      <div class="cell"><span class="k">Destination</span>
+        <span class="v">{{ q.trip.destinations | join(' · ') }}
+          {% if q.client.name %}<small>Prepared for {{ q.client.name }}</small>{% endif %}</span></div>
+      <div class="cell"><span class="k">Travel dates</span>
+        <span class="v">{{ q.trip.dates_display }}<small>{{ q.trip.year }}</small></span></div>
+      <div class="cell"><span class="k">Duration</span>
+        <span class="v">{{ q.trip.nights }} nights</span></div>
+      <div class="cell"><span class="k">Travellers</span>
+        <span class="v">{{ q.trip.travellers_main }}
+          {% if q.trip.travellers_sub %}<small>{{ q.trip.travellers_sub }}</small>{% endif %}</span></div>
+    </div>
+
+    {% if q.itinerary_overview %}
+    <section class="section">
+      <div class="eyebrow">Itinerary overview
+        <span class="tag">{{ q.itinerary_overview | map(attribute='nights') | sum }} nights across {{ q.itinerary_overview | length }} destinations</span></div>
+      <table>
+        <thead><tr><th>Dates</th><th>Destination</th><th class="num">Nights</th><th>Highlights</th></tr></thead>
+        <tbody>{% for leg in q.itinerary_overview %}
+          <tr><td>{{ leg.dates }}</td><td class="code">{{ leg.destination }}</td>
+              <td class="num">{{ leg.nights }}</td><td>{{ leg.highlight }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </section>
+    {% endif %}
+
+    <!-- 2. FLIGHTS -->
+    <section class="section">
+      <div class="h-major">Flights{% if q.flights_tag %}<span class="tag">{{ q.flights_tag }}</span>{% endif %}</div>
+
+      <!-- 2.1 Flight summary -->
+      <div class="eyebrow">Flight summary <span class="tag">Airlines and total per option</span></div>
+      <table class="sumtab">
+        <thead><tr><th>Option</th><th>Airline(s)</th><th class="num">Total</th></tr></thead>
+        <tbody>{% for fo in q.flight_options %}
+          <tr><td class="lbl">{{ fo.label }}{% if fo.summary_line %} <small>· {{ fo.summary_line }}</small>{% endif %}</td>
+              <td>{{ fo.airlines }}</td><td class="num amt">{{ fo.pricing.grand_total_fmt }}</td></tr>{% endfor %}</tbody>
+      </table>
+
+      <!-- 2.2+ Each flight option: Table 1 + Table 2 per leg-group, then fare rules/seating/notes -->
+      {% for fo in q.flight_options %}
+      <div class="opt">
+        <div class="opt-head">
+          {% if q.flight_options | length > 1 %}<span class="opt-chip">{{ fo.label }}</span>{% endif %}
+          <span class="opt-title">{{ fo.headline }}</span>
+          <span class="opt-total">Total<strong>{{ fo.pricing.grand_total_fmt }}</strong></span>
+        </div>
+        <div class="opt-body">
+          {% for grp in fo.groups %}
+          <div class="subhead">{{ grp.label }}{% if grp.meta %} · {{ grp.meta }}{% endif %}</div>
+
+          <!-- Table 1: schedule -->
+          <table class="flights">
+            <thead><tr><th>Flight</th><th>Aircraft</th><th>From</th><th>To</th><th>Date</th>
+              <th class="num">Departs</th><th class="num">Arrives</th><th>Class</th></tr></thead>
+            <tbody>{% for f in grp.flights %}
+              <tr><td class="code">{{ f.airline }} {{ f.flight_no }}</td>
+                  <td>{{ f.aircraft or '—' }}</td>
+                  <td>{{ f.from_city }}{% if f.from_code %} ({{ f.from_code }}){% endif %}</td>
+                  <td>{{ f.to_city }}{% if f.to_code %} ({{ f.to_code }}){% endif %}</td>
+                  <td>{{ f.date }}</td><td class="num">{{ f.departs }}</td>
+                  <td class="num">{{ f.arrives }}{% if f.next_day %} +1{% endif %}</td>
+                  <td>{{ f.cabin or 'Economy' }}</td></tr>{% endfor %}</tbody>
+          </table>
+
+          <!-- Table 2: flight information -->
+          <table class="finfo">
+            <thead><tr><th>Flight</th><th>Flying time</th><th class="num">Stops</th><th>Baggage</th></tr></thead>
+            <tbody>{% for f in grp.flights %}
+              <tr><td class="code">{{ f.airline }} {{ f.flight_no }}</td>
+                  <td>{{ f.flying_time or '—' }}</td>
+                  <td class="num">{{ f.stops if f.stops is not none else '—' }}</td>
+                  <td>{{ f.baggage or '—' }}</td></tr>{% endfor %}
+              {% if grp.fare_fmt %}<tr class="fare-row"><td colspan="3">Fare {{ grp.fare_basis or '' }}</td>
+                <td class="num">{{ grp.fare_fmt }}</td></tr>{% endif %}</tbody>
+          </table>
+          {% endfor %}
+
+          <div class="rules">
+            <div class="rr"><div class="rk">Fare rules</div><div class="rv">{{ fo.fare_rules or 'As per airline conditions at time of ticketing.' }}</div></div>
+            <div class="rr"><div class="rk">Seating</div><div class="rv">{{ fo.seating or 'Seat selection is not included; complimentary allocation is generally available at online check-in, subject to the airline.' }}</div></div>
+            <div class="rr"><div class="rk">Notes</div><div class="rv">{{ fo.notes or 'Not specified / required.' }}</div></div>
+          </div>
+
+          <div style="margin-top:10px;padding-top:8px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;font-weight:800;font-size:13px;">
+            <span>Total for {{ fo.label }}</span><span class="num">{{ fo.pricing.grand_total_fmt }}</span>
+          </div>
+          {% if fo.pricing.get('note') %}<div style="font-size:10.5px;color:var(--muted);margin-top:2px;">{{ fo.pricing.note }}</div>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </section>
+
+    <!-- 3. ACCOMMODATION — grouped by destination -->
+    <section class="section">
+      <div class="h-major">Accommodation <span class="tag">Options grouped by destination</span></div>
+      {% for dest in q.accommodation %}
+      <div class="eyebrow">{{ dest.name }}{% if dest.dates %}<span class="tag">{{ dest.dates }} · {{ dest.nights }} nights</span>{% endif %}</div>
+
+      <!-- destination summary -->
+      <table class="sumtab" style="margin-bottom:6px;">
+        <thead><tr><th>Option</th><th>Hotel</th><th>Room</th><th class="num">Rate total</th></tr></thead>
+        <tbody>{% for h in dest.options %}
+          <tr><td class="lbl">Option {{ loop.index }}</td>
+              <td>{{ h.name }}{% if h.star %} <span style="color:var(--amber);">{{ '★' * h.star }}</span>{% endif %}</td>
+              <td>{{ h.room }}</td><td class="num amt">{{ h.price_fmt }}</td></tr>{% endfor %}</tbody>
+      </table>
+
+      <!-- each hotel option as a detail table -->
+      {% for h in dest.options %}
+      <div class="opt">
+        <div class="opt-head">
+          <span class="opt-chip">Option {{ loop.index }}</span>
+          <span class="opt-title">{{ h.name }}{% if h.star %}<span class="stars">{{ '★' * h.star }}</span>{% endif %}</span>
+          <span class="opt-total">Rate total<strong>{{ h.price_fmt }}</strong></span>
+        </div>
+        <div class="opt-body">
+          <div class="hgrid">
+            <div class="hk">Hotel name</div><div class="hv">{{ h.name }}</div>
+            <div class="hk">Location</div><div class="hv">{{ h.address or 'Not specified' }}{% if h.geo_url %} · <a href="{{ h.geo_url }}">View map</a>{% endif %}</div>
+            <div class="hk">Website</div><div class="hv">{% if h.url %}<a href="{{ h.url }}">{{ h.url_label or h.url }}</a>{% else %}Not specified{% endif %}</div>
+            <div class="hk">Check in</div><div class="hv">{{ h.check_in }}</div>
+            <div class="hk">Check out</div><div class="hv">{{ h.check_out }}</div>
+            <div class="hk">Room type</div><div class="hv">{{ h.room }}</div>
+            <div class="hk">Meals</div><div class="hv">{{ h.meals or 'Room only' }}</div>
+            <div class="hk">Cancellation</div><div class="hv">{% if h.cxl_type=='free' %}<span class="pill pill-free">FREE</span> {{ h.cxl }}{% elif h.cxl_type=='nonref' %}<span class="pill pill-nonref">NON-REF</span>{% else %}{{ h.cxl or 'Not specified' }}{% endif %}</div>
+            <div class="hk">Rate total</div><div class="hv"><b>{{ h.price_fmt }}</b></div>
+            <div class="hk">Notes</div><div class="hv">{{ h.notes or h.desc or 'Not specified / required.' }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% endfor %}
+    </section>
+
+    <!-- 4. TRANSFERS -->
+    <section class="section">
+      <div class="h-major">Transfers</div>
+      {% if q.transfers %}
+      <table>
+        <thead><tr><th>Date</th><th>Supplier</th><th>Route</th><th>Vehicle</th><th class="num">Rate</th></tr></thead>
+        <tbody>{% for t in q.transfers %}
+          <tr><td>{{ t.date }}</td><td>{{ t.supplier or '—' }}</td><td>{{ t.route }}</td>
+              <td>{{ t.vehicle or '—' }}</td><td class="num">{{ t.rate_fmt or '—' }}</td></tr>{% endfor %}</tbody>
+      </table>
+      {% else %}<div class="note-box empty">Not specified / required.</div>{% endif %}
+    </section>
+
+    <!-- 5. RAIL -->
+    <section class="section">
+      <div class="h-major">Rail</div>
+      {% if q.rail %}
+      <table>
+        <thead><tr><th>Date</th><th>Service</th><th>From</th><th>To</th><th class="num">Rate</th></tr></thead>
+        <tbody>{% for r in q.rail %}
+          <tr><td>{{ r.date }}</td><td>{{ r.service }}</td><td>{{ r.from_city }}</td>
+              <td>{{ r.to_city }}</td><td class="num">{{ r.rate_fmt or '—' }}</td></tr>{% endfor %}</tbody>
+      </table>
+      {% else %}<div class="note-box empty">Not specified / required.</div>{% endif %}
+    </section>
+
+    <!-- 6. RECOMMENDED EXPERIENCES -->
+    <section class="section">
+      <div class="h-major">Recommended experiences <span class="tag">Optional · not included in totals</span></div>
+      {% if q.experiences %}
+      <div class="note-box"><ul>{% for e in q.experiences %}<li>{{ e }}</li>{% endfor %}</ul></div>
+      {% else %}<div class="note-box empty">Not specified / required.</div>{% endif %}
+    </section>
+
+    <!-- 7-9. VISA / HEALTH / INSURANCE -->
+    <section class="section">
+      <div class="h-major">Travel information</div>
+      <div style="margin-bottom:10px;"><div class="info-head">Visa info</div>
+        <div class="info-body">{{ q.visa_info or 'Not specified / required.' }}</div></div>
+      <div style="margin-bottom:10px;"><div class="info-head">Health info</div>
+        <div class="info-body">{{ q.health_info or 'Not specified / required.' }}</div></div>
+      <div><div class="info-head">Travel insurance</div>
+        <div class="info-body">{{ q.insurance_info or 'Travel insurance is strongly recommended from the moment a deposit is paid. We can assist with a policy to meet your needs.' }}</div></div>
+    </section>
+
+    {% if q.not_yet_included %}
+    <section class="section">
+      <div class="eyebrow">Not yet included <span class="tag">To follow in a revised quote</span></div>
+      <div class="note-box pending"><ul>{% for item in q.not_yet_included %}<li>{{ item }}</li>{% endfor %}</ul></div>
+    </section>
+    {% endif %}
+
+    <!-- 10. IMPORTANT NOTES -->
+    <section class="section">
+      <div class="h-major">Important notes</div>
+      <div class="terms"><ul>{% for t in q.terms %}<li>{{ t }}</li>{% endfor %}</ul></div>
+    </section>
+
+    <footer class="foot">
+      <div class="consultant">
+        Prepared by <b>{{ q.consultant.name }}</b> · The Travel Department<br>
+        {{ q.consultant.email }} · {{ q.consultant.address }}<br>
+        Questions or changes? Reply to this quote and we'll adjust it the same day.
+      </div>
+      <a class="cta" href="mailto:{{ q.consultant.email }}?subject=Booking%20request%20-%20Quote%20{{ q.reference }}">Book this trip</a>
+    </footer>
+
+  </div>
+</div>
+</body>
+</html>
