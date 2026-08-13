@@ -1,6 +1,8 @@
 {
+  "name": "vercel-pdf-project",
+  "version": "1.0.0",
   "dependencies": {
-    "chrome-aws-lambda": "^20.0.0",
-    "puppeteer-core": "^20.0.0"
+    "chrome-aws-lambda": "^10.1.0",
+    "puppeteer-core": "^10.1.0"
   }
 }
