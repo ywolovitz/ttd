@@ -1,4 +1,4 @@
-import chromium from 'chrome-aws-lambda';
+import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
 
 export default async function handler(req, res) {
@@ -33,23 +33,15 @@ export default async function handler(req, res) {
   let browser = null;
 
   try {
-    // chrome-aws-lambda should provide the executable path
-    const executablePath = await chromium.executablePath;
-
-    if (!executablePath) {
-      return res.status(500).json({
-        error: 'Chromium executable not available',
-        message: 'chrome-aws-lambda did not provide an executablePath'
-      });
-    }
+    const executablePath = await chromium.executablePath();
 
     console.log('Chromium executable:', executablePath);
 
     browser = await puppeteer.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: executablePath,
-      headless: chromium.headless,
+      executablePath,
+      headless: true
     });
 
     const page = await browser.newPage();
@@ -88,8 +80,8 @@ export default async function handler(req, res) {
     if (browser) {
       try {
         await browser.close();
-      } catch (closeError) {
-        console.error('Browser close error:', closeError);
+      } catch (err) {
+        console.error('Browser close error:', err);
       }
     }
   }
