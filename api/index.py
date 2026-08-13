@@ -37,7 +37,7 @@ def handler(request: Request):
 
     # Forward HTML to internal Node renderer
     host = request.headers.get("host")
-    node_url = f"https://{host}/api/_render-pdf"
+    node_url = f"https://{host}/api/_render-pdf.js"
     headers = {"Content-Type":"application/json", "x-render-token": RENDER_TOKEN}
 
     try:
