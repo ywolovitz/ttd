@@ -182,7 +182,7 @@
     {% if q.itinerary_overview %}
     <section class="section">
       <div class="eyebrow">Itinerary overview
-        <span class="tag">{{ q.itinerary_overview | map(attribute='nights') | sum }} nights across {{ q.itinerary_overview | length }} destinations</span></div>
+        <span class="tag">{{ q.itinerary_overview | map(attribute='nights') | map('int', 0) | sum }} nights across {{ q.itinerary_overview | length }} destinations</span></div>
       <table>
         <thead><tr><th>Dates</th><th>Destination</th><th class="num">Nights</th><th>Highlights</th></tr></thead>
         <tbody>{% for leg in q.itinerary_overview %}
