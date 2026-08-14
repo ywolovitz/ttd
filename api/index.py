@@ -1,10 +1,9 @@
 import os
 import json
 from http.server import BaseHTTPRequestHandler
-
 import requests
-
 from render_lib import render_html_from_quote
+import traceback
 
 
 RENDER_TOKEN = os.environ.get("RENDER_TOKEN")
@@ -92,6 +91,7 @@ class handler(BaseHTTPRequestHandler):
                 {
                     "error": "Render HTML failed",
                     "details": str(e),
+                    "traceback":traceback.format_exc()
                 },
             )
             return
