@@ -4,7 +4,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
 KIT = Path(__file__).parent
-FONTDIR = Path('/home/claude/node_modules/@fontsource/inter/files')
+FONTDIR = KIT / "fonts"
 
 SYMS = {"ZAR":"R","USD":"$","EUR":"\u20ac","GBP":"\u00a3"}
 
