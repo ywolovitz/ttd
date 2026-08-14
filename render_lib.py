@@ -85,6 +85,9 @@ def render_html_from_quote(quote_obj):
     for r in q.get("rail", []) or []:
         if "rate" in r: r["rate_fmt"] = money(num(r.get("rate")), SYMS.get(r.get("currency","ZAR"),"R"))
 
+    for stop in q.get("itinerary_overview", []) or []:
+        stop["nights"] = num(stop.get("nights"), 0)
+
     q["terms"] = STANDARD_TERMS.get(q.get("terms_profile","standard_za_international"), []) + q.get("custom_notes", [])
     logo_b64 = base64.b64encode((Path(__file__).parent/"logo.png").read_bytes()).decode()
 
