@@ -23,23 +23,31 @@ STANDARD_TERMS = {
  ],
 }
 
+def num(value, default=0.0):
+    """Coalesce None -> default. .get(key, default) only helps when the key is
+    MISSING; if the key is present but explicitly null (common from the AI
+    extraction pipeline's nullable-number fields), .get() still returns None."""
+    return default if value is None else value
+
 def money(amount, sym):
-    return f"{sym} {amount:,.2f}".replace(",", " ")
+    return f"{sym} {num(amount):,.2f}".replace(",", " ")
 
 def price_option(pricing):
     sym = SYMS.get(pricing.get("currency","ZAR"), pricing.get("currency","R"))
     grand = 0.0; taxes_total = 0.0
     for line in pricing.get("lines", []):
-        n = line.get("count",1)
-        sub = (line["fare_pp"] + line.get("taxes_pp",0.0)) * n
-        taxes_total += line.get("taxes_pp",0.0)*n
+        n = num(line.get("count",1), 1)
+        fare_pp = num(line.get("fare_pp"))
+        taxes_pp = num(line.get("taxes_pp"))
+        sub = (fare_pp + taxes_pp) * n
+        taxes_total += taxes_pp * n
         grand += sub
         line.setdefault("pax_label", f"{line.get('pax_type','Item')} \u00d7 {n}")
-        line["fare_fmt"] = money(line["fare_pp"], sym)
-        line["taxes_fmt"] = money(line.get("taxes_pp",0.0), sym)
+        line["fare_fmt"] = money(fare_pp, sym)
+        line["taxes_fmt"] = money(taxes_pp, sym)
         line["subtotal_fmt"] = money(sub, sym)
     pricing["taxes_total_fmt"] = money(taxes_total, sym)
-    pricing["vat_fmt"] = money(pricing.get("vat",0.0), sym)
+    pricing["vat_fmt"] = money(num(pricing.get("vat")), sym)
     pricing["grand_total_fmt"] = money(grand, sym)
     return sym
 
@@ -65,17 +73,17 @@ def render_html_from_quote(quote_obj):
         sym = price_option(fo["pricing"])
         for grp in fo.get("groups", []):
             if "fare" in grp:
-                grp["fare_fmt"] = money(grp["fare"], sym)
+                grp["fare_fmt"] = money(num(grp.get("fare")), sym)
 
     for dest in q.get("accommodation", []):
         for h in dest.get("options", []):
             sym = SYMS.get(h.get("currency","ZAR"),"R")
-            h["price_fmt"] = money(h.get("price",0.0), sym)
+            h["price_fmt"] = money(num(h.get("price")), sym)
 
     for t in q.get("transfers", []) or []:
-        if "rate" in t: t["rate_fmt"] = money(t["rate"], SYMS.get(t.get("currency","ZAR"),"R"))
+        if "rate" in t: t["rate_fmt"] = money(num(t.get("rate")), SYMS.get(t.get("currency","ZAR"),"R"))
     for r in q.get("rail", []) or []:
-        if "rate" in r: r["rate_fmt"] = money(r["rate"], SYMS.get(r.get("currency","ZAR"),"R"))
+        if "rate" in r: r["rate_fmt"] = money(num(r.get("rate")), SYMS.get(r.get("currency","ZAR"),"R"))
 
     q["terms"] = STANDARD_TERMS.get(q.get("terms_profile","standard_za_international"), []) + q.get("custom_notes", [])
     logo_b64 = base64.b64encode((Path(__file__).parent/"logo.png").read_bytes()).decode()
