@@ -273,7 +273,7 @@
         <thead><tr><th>Option</th><th>Hotel</th><th>Room</th><th class="num">Rate total</th></tr></thead>
         <tbody>{% for h in dest.options %}
           <tr><td class="lbl">Option {{ loop.index }}</td>
-              <td>{{ h.name }}{% if h.star %} <span style="color:var(--gold);">{{ '★' * h.star }}</span>{% endif %}</td>
+              <td>{{ h.name }}{% if h.star %} <span style="color:var(--gold);">{{ '★' * (h.star|int) }}</span>{% endif %}</td>
               <td>{{ h.room }}</td><td class="num amt">{{ h.price_fmt }}</td></tr>{% endfor %}</tbody>
       </table>
 
@@ -282,7 +282,7 @@
       <div class="opt">
         <div class="opt-head">
           <span class="opt-chip">Option {{ loop.index }}</span>
-          <span class="opt-title">{{ h.name }}{% if h.star %}<span class="stars">{{ '★' * h.star }}</span>{% endif %}</span>
+          <span class="opt-title">{{ h.name }}{% if h.star %}<span class="stars">{{ '★' * (h.star|int) }}</span>{% endif %}</span>
           <span class="opt-total">Rate total<strong>{{ h.price_fmt }}</strong></span>
         </div>
         <div class="opt-body">
