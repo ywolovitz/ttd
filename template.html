@@ -338,11 +338,11 @@
       <table>
         <thead><tr><th>Pickup</th><th>Drop-off</th><th>Vehicle</th><th>Supplier</th><th class="num">Rate</th></tr></thead>
         <tbody>{% for c in q.car_rentals %}
-          <tr><td>{{ c.pickup_date }}{% if c.pickup_location %} · {{ c.pickup_location }}{% endif %}</td>
-              <td>{{ c.dropoff_date }}{% if c.dropoff_location %} · {{ c.dropoff_location }}{% endif %}</td>
+          <tr><td>{{ c.pickup_datetime }}{% if c.pickup_location %} · {{ c.pickup_location }}{% endif %}</td>
+              <td>{{ c.dropoff_datetime }}{% if c.dropoff_location %} · {{ c.dropoff_location }}{% endif %}</td>
               <td>{{ c.vehicle or '—' }}</td>
               <td>{{ c.supplier or '—' }}</td>
-              <td class="num">{{ c.rate_fmt or '—' }}</td></tr>{% endfor %}</tbody>
+              <td class="num">{{ c.price_fmt or '—' }}</td></tr>{% endfor %}</tbody>
       </table>
     </section>
     {% endif %}

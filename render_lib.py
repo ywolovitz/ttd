@@ -85,7 +85,7 @@ def render_html_from_quote(quote_obj):
     for r in q.get("rail", []) or []:
         if "rate" in r: r["rate_fmt"] = money(num(r.get("rate")), SYMS.get(r.get("currency","ZAR"),"R"))
     for c in q.get("car_rentals", []) or []:
-        if "rate" in c: c["rate_fmt"] = money(num(c.get("rate")), SYMS.get(c.get("currency","ZAR"),"R"))
+        if "price" in c: c["price_fmt"] = money(num(c.get("price")), SYMS.get(c.get("currency","ZAR"),"R"))
 
     for stop in q.get("itinerary_overview", []) or []:
         stop["nights"] = num(stop.get("nights"), 0)
