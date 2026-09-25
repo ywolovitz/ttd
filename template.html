@@ -193,6 +193,7 @@
     {% endif %}
 
     <!-- 2. FLIGHTS -->
+    {% if q.flight_options %}
     <section class="section">
       <div class="h-major">Flights{% if q.flights_tag %}<span class="tag">{{ q.flights_tag }}</span>{% endif %}</div>
 
@@ -258,8 +259,10 @@
       </div>
       {% endfor %}
     </section>
+    {% endif %}
 
     <!-- 3. ACCOMMODATION — grouped by destination -->
+    {% if q.accommodation %}
     <section class="section">
       <div class="h-major">Accommodation <span class="tag">Options grouped by destination</span></div>
       {% for dest in q.accommodation %}
@@ -300,42 +303,59 @@
       {% endfor %}
       {% endfor %}
     </section>
+    {% endif %}
 
     <!-- 4. TRANSFERS -->
+    {% if q.transfers %}
     <section class="section">
       <div class="h-major">Transfers</div>
-      {% if q.transfers %}
       <table>
         <thead><tr><th>Date</th><th>Supplier</th><th>Route</th><th>Vehicle</th><th class="num">Rate</th></tr></thead>
         <tbody>{% for t in q.transfers %}
           <tr><td>{{ t.date }}</td><td>{{ t.supplier or '—' }}</td><td>{{ t.route }}</td>
               <td>{{ t.vehicle or '—' }}</td><td class="num">{{ t.rate_fmt or '—' }}</td></tr>{% endfor %}</tbody>
       </table>
-      {% else %}<div class="note-box empty">Not specified / required.</div>{% endif %}
     </section>
+    {% endif %}
 
     <!-- 5. RAIL -->
+    {% if q.rail %}
     <section class="section">
       <div class="h-major">Rail</div>
-      {% if q.rail %}
       <table>
         <thead><tr><th>Date</th><th>Service</th><th>From</th><th>To</th><th class="num">Rate</th></tr></thead>
         <tbody>{% for r in q.rail %}
           <tr><td>{{ r.date }}</td><td>{{ r.service }}</td><td>{{ r.from_city }}</td>
               <td>{{ r.to_city }}</td><td class="num">{{ r.rate_fmt or '—' }}</td></tr>{% endfor %}</tbody>
       </table>
-      {% else %}<div class="note-box empty">Not specified / required.</div>{% endif %}
     </section>
+    {% endif %}
 
-    <!-- 6. RECOMMENDED EXPERIENCES -->
+    <!-- 6. CAR RENTAL -->
+    {% if q.car_rentals %}
+    <section class="section">
+      <div class="h-major">Car rental</div>
+      <table>
+        <thead><tr><th>Pickup</th><th>Drop-off</th><th>Vehicle</th><th>Supplier</th><th class="num">Rate</th></tr></thead>
+        <tbody>{% for c in q.car_rentals %}
+          <tr><td>{{ c.pickup_date }}{% if c.pickup_location %} · {{ c.pickup_location }}{% endif %}</td>
+              <td>{{ c.dropoff_date }}{% if c.dropoff_location %} · {{ c.dropoff_location }}{% endif %}</td>
+              <td>{{ c.vehicle or '—' }}</td>
+              <td>{{ c.supplier or '—' }}</td>
+              <td class="num">{{ c.rate_fmt or '—' }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </section>
+    {% endif %}
+
+    <!-- 7. RECOMMENDED EXPERIENCES -->
+    {% if q.experiences %}
     <section class="section">
       <div class="h-major">Recommended experiences <span class="tag">Optional · not included in totals</span></div>
-      {% if q.experiences %}
       <div class="note-box"><ul>{% for e in q.experiences %}<li>{{ e }}</li>{% endfor %}</ul></div>
-      {% else %}<div class="note-box empty">Not specified / required.</div>{% endif %}
     </section>
+    {% endif %}
 
-    <!-- 7-9. VISA / HEALTH / INSURANCE -->
+    <!-- 8-10. VISA / HEALTH / INSURANCE -->
     <section class="section">
       <div class="h-major">Travel information</div>
       <div style="margin-bottom:10px;"><div class="info-head">Visa info</div>
@@ -353,7 +373,7 @@
     </section>
     {% endif %}
 
-    <!-- 10. IMPORTANT NOTES -->
+    <!-- 11. IMPORTANT NOTES -->
     <section class="section">
       <div class="h-major">Important notes</div>
       <div class="terms"><ul>{% for t in q.terms %}<li>{{ t }}</li>{% endfor %}</ul></div>
