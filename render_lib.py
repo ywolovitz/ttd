@@ -24,19 +24,30 @@ STANDARD_TERMS = {
 }
 
 def num(value, default=0.0):
-    """Coalesce None -> default. .get(key, default) only helps when the key is
-    MISSING; if the key is present but explicitly null (common from the AI
-    extraction pipeline's nullable-number fields), .get() still returns None."""
+    """ Returns unchanged value, or default if value is None."""
     return default if value is None else value
 
 def money(amount, sym):
+    """ Returns SYM xxx xxx.xx"""
     return f"{sym} {num(amount):,.2f}".replace(",", " ")
 
 def price_option(pricing):
+    """
+    Takes the pricing part of flight options, calculates grand total, fares, taxes, and subtotal.
+    It mutates pricing by adding fare_fmt, taxes_fmt and subtotal_fmt onto each line and adding taxes_total_fmt, vat_fmt, grand_total_fmt onto pricing.
+    
+    Args:
+
+    pricing: flight pricing json
+
+    returns the currency symbol of pricing.
+    """
     sym = SYMS.get(pricing.get("currency","ZAR"), pricing.get("currency","R"))
     grand = 0.0; taxes_total = 0.0
     for line in pricing.get("lines", []):
         n = num(line.get("count",1), 1)
+        if n <= 0: # Count Invalid , count can only be 1 and up.
+            n = 1
         fare_pp = num(line.get("fare_pp"))
         taxes_pp = num(line.get("taxes_pp"))
         sub = (fare_pp + taxes_pp) * n
@@ -52,6 +63,16 @@ def price_option(pricing):
     return sym
 
 def font_block():
+    """
+    Returns an HTML string for the document <head>: a <style> block of @font-face
+    rules built from whichever local .woff2 files exist under FONTDIR, or a Google
+    Fonts <link> tag if none exist at all.
+ 
+    Checks each of the 10 weight/style combinations individually, but the fallback
+    itself is all-or-nothing: if at least one local file is found, only those local
+    @font-face rules are emitted (any missing weight/style is simply absent, with no
+    per-missing-file fallback to Google Fonts); the Google Fonts link is only used
+    when zero local font files are found."""
     faces=[]
     for w in (400,500,600,700,800):
         for style in ("normal","italic"):
@@ -62,12 +83,25 @@ def font_block():
         '<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet">'
 
 def render_html_from_quote(quote_obj):
+    """
+    Takes a quote JSON Object checks presence of critical points, formats numbers and money amounts, then passes this on to HTML to process with Jinja.
+
+    Args:
+    quote_obj: Quote JSON Object
+
+    Returns:
+    
+    HTML: Quote HTML
+
+    Raises:
+
+    ValueError: if reference, date, valid until, consultant, client or trip is not in the JSON.
+    
+    """
     q = quote_obj.copy()
     for f in ("reference","date","valid_until","consultant","client","trip"):
         if f not in q:
             raise ValueError(f"Missing mandatory field: {f}")
-    if not (q.get("flight_options") or q.get("accommodation")):
-        raise ValueError("Need at least flights or accommodation")
 
     for fo in q.get("flight_options", []):
         sym = price_option(fo["pricing"])
