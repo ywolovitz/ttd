@@ -350,8 +350,10 @@
     <!-- 7. RECOMMENDED EXPERIENCES -->
     {% if q.experiences %}
     <section class="section">
-      <div class="h-major">Recommended experiences <span class="tag">Optional · not included in totals</span></div>
-      <div class="note-box"><ul>{% for e in q.experiences %}<li>{{ e }}</li>{% endfor %}</ul></div>
+      <div class="h-major">Recommended experiences <span class="tag">Optional · priced separately</span></div>
+      <div class="note-box"><ul>{% for e in q.experiences %}
+        {% if e is string %}<li>{{ e }}</li>
+        {% else %}<li><b>{{ [e.location, e.start_date or e.date, e.provider_name or e.provider or e.name, e.price_fmt, e.description] | select | join(' · ') }}</b></li>{% endif %}{% endfor %}</ul></div>
     </section>
     {% endif %}
 
