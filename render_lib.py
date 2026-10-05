@@ -33,8 +33,20 @@ FEE_FIELDS = {
 }
 
 def num(value, default=0.0):
-    """ Returns unchanged value, or default if value is None."""
-    return default if value is None else value
+    """ Returns value as a number; None, empty or non-numeric text gives default."""
+    if value is None or value == "":
+        return default
+    if isinstance(value, (int, float)):
+        return value
+    try:
+        return float(str(value).strip().replace(" ", ""))
+    except ValueError:
+        return default
+
+def sym_for(currency, default="ZAR"):
+    """ Currency symbol; unknown currencies show their code (e.g. AUD) instead of R."""
+    cur = currency or default
+    return SYMS.get(cur, cur)
 
 def money(amount, sym):
     """ Returns SYM xxx xxx.xx"""
@@ -80,12 +92,13 @@ def price_option(pricing):
 
     returns the currency symbol of pricing.
     """
-    sym = SYMS.get(pricing.get("currency","ZAR"), pricing.get("currency","R"))
+    sym = sym_for(pricing.get("currency"))
     grand = 0.0; taxes_total = 0.0
     for line in pricing.get("lines", []):
         n = num(line.get("count",1), 1)
         if n <= 0: # Count Invalid , count can only be 1 and up.
             n = 1
+        n = int(n)
         fare_pp = num(line.get("fare_pp"))
         taxes_pp = num(line.get("taxes_pp"))
         sub = (fare_pp + taxes_pp) * n
@@ -154,30 +167,30 @@ def render_html_from_quote(quote_obj):
 
     for dest in q.get("accommodation", []):
         for h in dest.get("options", []):
-            sym = SYMS.get(h.get("currency","ZAR"),"R")
+            sym = sym_for(h.get("currency"))
             base = num(h.get("price"))
             apply_fees(h, base, sym)
             h["price_fmt"] = h["total_fmt"]  # PDF shows the all-in total only
 
     for t in q.get("transfers", []) or []:
         if "rate" in t:
-            sym = SYMS.get(t.get("currency","ZAR"),"R")
+            sym = sym_for(t.get("currency"))
             apply_fees(t, num(t.get("rate")), sym)
             t["rate_fmt"] = t["total_fmt"]  # PDF shows the all-in total only
     for r in q.get("rail", []) or []:
         if "rate" in r:
-            sym = SYMS.get(r.get("currency","ZAR"),"R")
+            sym = sym_for(r.get("currency"))
             apply_fees(r, num(r.get("rate")), sym)
             r["rate_fmt"] = r["total_fmt"]  # PDF shows the all-in total only
 
     for c in q.get("car_rentals", []) or []:
-        sym = SYMS.get(c.get("currency","ZAR"),"R")
+        sym = sym_for(c.get("currency"))
         base = num(c.get("price"))
         apply_fees(c, base, sym)
         c["price_fmt"] = c["total_fmt"]  # PDF shows the all-in total only
 
     for e in q.get("experiences", []) or []:
-        sym = SYMS.get(e.get("currency","ZAR"),"R")
+        sym = sym_for(e.get("currency"))
         base = num(e.get("price"))
         apply_fees(e, base, sym)
         e["price_fmt"] = e["total_fmt"]  # PDF shows the all-in total only
@@ -185,7 +198,7 @@ def render_html_from_quote(quote_obj):
     for stop in q.get("itinerary_overview", []) or []:
         stop["nights"] = num(stop.get("nights"), 0)
 
-    q["terms"] = STANDARD_TERMS.get(q.get("terms_profile","standard_za_international"), []) + q.get("custom_notes", [])
+    q["terms"] = STANDARD_TERMS.get(q.get("terms_profile","standard_za_international"), []) + (q.get("custom_notes") or [])
     logo_b64 = base64.b64encode((Path(__file__).parent/"logo.png").read_bytes()).decode()
 
     env = Environment(loader=FileSystemLoader(Path(__file__).parent), autoescape=False)
