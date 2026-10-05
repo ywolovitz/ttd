@@ -23,6 +23,15 @@ STANDARD_TERMS = {
  ],
 }
 
+# Flat fees (same currency as the item) that are added to the item's total.
+# JSON key -> formatted key written back onto the item.
+FEE_FIELDS = {
+    "markup": "markup_fmt",
+    "transaction_fee": "transaction_fee_fmt",
+    "cancellation_fee": "cancellation_fee_fmt",
+    "change_fee": "change_fee_fmt",
+}
+
 def num(value, default=0.0):
     """ Returns unchanged value, or default if value is None."""
     return default if value is None else value
@@ -31,11 +40,40 @@ def money(amount, sym):
     """ Returns SYM xxx xxx.xx"""
     return f"{sym} {num(amount):,.2f}".replace(",", " ")
 
+def apply_fees(item, base, sym):
+    """
+    Adds markup, transaction_fee, cancellation_fee and change_fee (flat amounts, None/missing = 0)
+    to base. Mutates item by adding markup_fmt, transaction_fee_fmt, cancellation_fee_fmt,
+    change_fee_fmt, fees_total_fmt, subtotal_before_fees_fmt and total_fmt.
+
+    Args:
+    item: the dict holding the fee fields (accommodation option, car rental, experience, pricing)
+    base: the amount before fees
+    sym: currency symbol
+
+    Returns the total (base + fees) as a float.
+    """
+    fees_total = 0.0
+    for key, fmt_key in FEE_FIELDS.items():
+        amt = num(item.get(key))
+        fees_total += amt
+        item[fmt_key] = money(amt, sym)
+    total = base + fees_total
+    item["subtotal_before_fees_fmt"] = money(base, sym)
+    item["fees_total_fmt"] = money(fees_total, sym)
+    item["total_fmt"] = money(total, sym)
+    return total
+
 def price_option(pricing):
     """
-    Takes the pricing part of flight options, calculates grand total, fares, taxes, and subtotal.
-    It mutates pricing by adding fare_fmt, taxes_fmt and subtotal_fmt onto each line and adding taxes_total_fmt, vat_fmt, grand_total_fmt onto pricing.
-    
+    Takes the pricing part of flight options, calculates grand total, fares, taxes, fees and subtotal.
+    It mutates pricing by adding fare_fmt, taxes_fmt and subtotal_fmt onto each line and adding
+    taxes_total_fmt, vat_fmt, markup_fmt, transaction_fee_fmt, cancellation_fee_fmt, change_fee_fmt,
+    fees_total_fmt, subtotal_before_fees_fmt and grand_total_fmt onto pricing.
+
+    grand total = sum of line subtotals + markup + transaction fee + cancellation fee + change fee.
+    Fees are flat amounts per flight option; None or missing counts as 0.
+
     Args:
 
     pricing: flight pricing json
@@ -57,9 +95,11 @@ def price_option(pricing):
         line["fare_fmt"] = money(fare_pp, sym)
         line["taxes_fmt"] = money(taxes_pp, sym)
         line["subtotal_fmt"] = money(sub, sym)
+
+    grand = apply_fees(pricing, grand, sym)
     pricing["taxes_total_fmt"] = money(taxes_total, sym)
     pricing["vat_fmt"] = money(num(pricing.get("vat")), sym)
-    pricing["grand_total_fmt"] = money(grand, sym)
+    pricing["grand_total_fmt"] = pricing["total_fmt"]
     return sym
 
 def font_block():
@@ -85,6 +125,9 @@ def font_block():
 def render_html_from_quote(quote_obj):
     """
     Takes a quote JSON Object checks presence of critical points, formats numbers and money amounts, then passes this on to HTML to process with Jinja.
+
+    Flights, accommodation options, car rentals and experiences (excursions) each get their
+    markup / transaction / cancellation / change fees added to their total.
 
     Args:
     quote_obj: Quote JSON Object
@@ -112,14 +155,32 @@ def render_html_from_quote(quote_obj):
     for dest in q.get("accommodation", []):
         for h in dest.get("options", []):
             sym = SYMS.get(h.get("currency","ZAR"),"R")
-            h["price_fmt"] = money(num(h.get("price")), sym)
+            base = num(h.get("price"))
+            apply_fees(h, base, sym)
+            h["price_fmt"] = h["total_fmt"]  # PDF shows the all-in total only
 
     for t in q.get("transfers", []) or []:
-        if "rate" in t: t["rate_fmt"] = money(num(t.get("rate")), SYMS.get(t.get("currency","ZAR"),"R"))
+        if "rate" in t:
+            sym = SYMS.get(t.get("currency","ZAR"),"R")
+            apply_fees(t, num(t.get("rate")), sym)
+            t["rate_fmt"] = t["total_fmt"]  # PDF shows the all-in total only
     for r in q.get("rail", []) or []:
-        if "rate" in r: r["rate_fmt"] = money(num(r.get("rate")), SYMS.get(r.get("currency","ZAR"),"R"))
+        if "rate" in r:
+            sym = SYMS.get(r.get("currency","ZAR"),"R")
+            apply_fees(r, num(r.get("rate")), sym)
+            r["rate_fmt"] = r["total_fmt"]  # PDF shows the all-in total only
+
     for c in q.get("car_rentals", []) or []:
-        if "price" in c: c["price_fmt"] = money(num(c.get("price")), SYMS.get(c.get("currency","ZAR"),"R"))
+        sym = SYMS.get(c.get("currency","ZAR"),"R")
+        base = num(c.get("price"))
+        apply_fees(c, base, sym)
+        c["price_fmt"] = c["total_fmt"]  # PDF shows the all-in total only
+
+    for e in q.get("experiences", []) or []:
+        sym = SYMS.get(e.get("currency","ZAR"),"R")
+        base = num(e.get("price"))
+        apply_fees(e, base, sym)
+        e["price_fmt"] = e["total_fmt"]  # PDF shows the all-in total only
 
     for stop in q.get("itinerary_overview", []) or []:
         stop["nights"] = num(stop.get("nights"), 0)
