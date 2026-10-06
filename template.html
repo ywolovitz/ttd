@@ -240,8 +240,6 @@
                   <td>{{ f.flying_time or '—' }}</td>
                   <td class="num">{{ f.stops if f.stops is not none else '—' }}</td>
                   <td>{{ f.baggage or '—' }}</td></tr>{% endfor %}
-              {% if grp.fare_fmt %}<tr class="fare-row"><td colspan="3">Fare {{ grp.fare_basis or '' }}</td>
-                <td class="num">{{ grp.fare_fmt }}</td></tr>{% endif %}</tbody>
           </table>
           {% endfor %}
 
