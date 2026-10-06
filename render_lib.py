@@ -28,9 +28,15 @@ STANDARD_TERMS = {
 FEE_FIELDS = {
     "markup": "markup_fmt",
     "transaction_fee": "transaction_fee_fmt",
+    # "cancellation_fee": "cancellation_fee_fmt",
+    # "change_fee": "change_fee_fmt",
+}
+
+# Display-only fees: formatted for the PDF but NOT added to the total.
+INFO_FEE_FIELDS = {
     "cancellation_fee": "cancellation_fee_fmt",
     "change_fee": "change_fee_fmt",
-}
+}   
 
 def num(value, default=0.0):
     """ Returns value as a number; None, empty or non-numeric text gives default."""
@@ -70,6 +76,8 @@ def apply_fees(item, base, sym):
         amt = num(item.get(key))
         fees_total += amt
         item[fmt_key] = money(amt, sym)
+    for key, fmt_key in INFO_FEE_FIELDS.items():
+        item[fmt_key] = money(num(item.get(key)), sym)
     total = base + fees_total
     item["subtotal_before_fees_fmt"] = money(base, sym)
     item["fees_total_fmt"] = money(fees_total, sym)

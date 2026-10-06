@@ -247,6 +247,8 @@
             <div class="rr"><div class="rk">Fare rules</div><div class="rv">{{ fo.fare_rules or 'As per airline conditions at time of ticketing.' }}</div></div>
             <div class="rr"><div class="rk">Seating</div><div class="rv">{{ fo.seating or 'Seat selection is not included; complimentary allocation is generally available at online check-in, subject to the airline.' }}</div></div>
             <div class="rr"><div class="rk">Notes</div><div class="rv">{{ fo.notes or 'Not specified / required.' }}</div></div>
+            {% if fo.pricing.cancellation_fee %}<div class="rr"><div class="rk">Flight Cancellation fee</div><div class="rv">{{ fo.pricing.cancellation_fee_fmt }}</div></div>{% endif %}
+            {% if fo.pricing.change_fee %}<div class="rr"><div class="rk">Flight Change fee</div><div class="rv">{{ fo.pricing.change_fee_fmt }}</div></div>{% endif %}
           </div>
 
           <div style="margin-top:10px;padding-top:8px;border-top:2px solid var(--ink);display:flex;justify-content:space-between;font-weight:800;font-size:13px;">
