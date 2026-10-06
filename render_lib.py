@@ -60,8 +60,9 @@ def money(amount, sym):
 
 def apply_fees(item, base, sym):
     """
-    Adds markup, transaction_fee, cancellation_fee and change_fee (flat amounts, None/missing = 0)
-    to base. Mutates item by adding markup_fmt, transaction_fee_fmt, cancellation_fee_fmt,
+    Adds markup and transaction_fee (flat amounts, None/missing = 0)
+    to base. cancellation_fee and change_fee are display only: they are formatted but NOT added to the total.
+    Mutates item by adding markup_fmt, transaction_fee_fmt, cancellation_fee_fmt,
     change_fee_fmt, fees_total_fmt, subtotal_before_fees_fmt and total_fmt.
 
     Args:
@@ -69,7 +70,7 @@ def apply_fees(item, base, sym):
     base: the amount before fees
     sym: currency symbol
 
-    Returns the total (base + fees) as a float.
+    Returns the total (base + markup + transaction fee) as a float.
     """
     fees_total = 0.0
     for key, fmt_key in FEE_FIELDS.items():
@@ -91,7 +92,7 @@ def price_option(pricing):
     taxes_total_fmt, vat_fmt, markup_fmt, transaction_fee_fmt, cancellation_fee_fmt, change_fee_fmt,
     fees_total_fmt, subtotal_before_fees_fmt and grand_total_fmt onto pricing.
 
-    grand total = sum of line subtotals + markup + transaction fee + cancellation fee + change fee.
+    grand total = sum of line subtotals + markup + transaction fee.
     Fees are flat amounts per flight option; None or missing counts as 0.
 
     Args:
