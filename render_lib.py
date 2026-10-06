@@ -58,6 +58,29 @@ def money(amount, sym):
     """ Returns SYM xxx xxx.xx"""
     return f"{sym} {num(amount):,.2f}".replace(",", " ")
 
+def _pax(n, singular, plural):
+    return f"{n} {singular if n == 1 else plural}"
+
+def build_travellers(trip):
+    """
+    Sets trip['travellers_main'] / trip['travellers_sub'] from trip['adults'] and
+    trip['children']. A count that is None, empty or 0 is omitted entirely.
+    If neither key exists, or both counts are 0, the existing text is left untouched.
+    """
+    if "adults" not in trip and "children" not in trip:
+        return
+    adults = int(num(trip.get("adults")))
+    children = int(num(trip.get("children")))
+    parts = []
+    if adults > 0:
+        parts.append(_pax(adults, "Adult", "Adults"))
+    if children > 0:
+        parts.append(_pax(children, "Child", "Children"))
+    if not parts:
+        return
+    trip["travellers_main"] = parts[0]
+    trip["travellers_sub"] = ", ".join(parts[1:])  # empty string => template hides it
+
 def apply_fees(item, base, sym):
     """
     Adds markup and transaction_fee (flat amounts, None/missing = 0)
@@ -167,7 +190,8 @@ def render_html_from_quote(quote_obj):
     for f in ("reference","date","valid_until","consultant","client","trip"):
         if f not in q:
             raise ValueError(f"Missing mandatory field: {f}")
-
+    q["trip"] = dict(q["trip"])
+    build_travellers(q["trip"])
     for fo in q.get("flight_options", []):
         sym = price_option(fo["pricing"])
         for grp in fo.get("groups", []):
