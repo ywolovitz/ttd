@@ -190,8 +190,6 @@ def render_html_from_quote(quote_obj):
     for f in ("reference","date","valid_until","consultant","client","trip"):
         if f not in q:
             raise ValueError(f"Missing mandatory field: {f}")
-    q["trip"] = dict(q["trip"])
-    build_travellers(q["trip"])
     for fo in q.get("flight_options", []):
         sym = price_option(fo["pricing"])
         for grp in fo.get("groups", []):
